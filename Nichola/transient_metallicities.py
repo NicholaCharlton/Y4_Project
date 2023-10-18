@@ -3,6 +3,7 @@ import pandas as pd
 from hoki import load
 import matplotlib.pyplot as plt
 
+# BINARY
 path = 'Downloads//bpass_v2.2.1_imf135_300'
 br_1 = load.model_output(path + '//supernova-bin-imf135_300.z001.dat.gz')[:-1]
 br_2 = load.model_output(path + '//supernova-bin-imf135_300.z002.dat.gz')[:-1]
@@ -99,3 +100,47 @@ plt.scatter(max_time_typeIa, metallicities, color='g', label='Type Ia')
 #plt.scatter(max_time_pisne, metallicities, color='b', label='PISNe')
 plt.show()
 '''
+
+# SINGULAR
+# plots all transient rates on the same graph (edit for other transient types)
+
+sbr_1 = load.model_output(path + '//supernova-sin-imf135_300.z001.dat.gz')[:-1]
+sbr_2 = load.model_output(path + '//supernova-sin-imf135_300.z002.dat.gz')[:-1]
+sbr_3 = load.model_output(path + '//supernova-sin-imf135_300.z003.dat.gz')[:-1]
+sbr_4 = load.model_output(path + '//supernova-sin-imf135_300.z004.dat.gz')[:-1]
+sbr_5 = load.model_output(path + '//supernova-sin-imf135_300.z006.dat.gz')[:-1]
+sbr_6 = load.model_output(path + '//supernova-sin-imf135_300.z008.dat.gz')[:-1]
+sbr_7 = load.model_output(path + '//supernova-sin-imf135_300.z010.dat.gz')[:-1]
+sbr_8 = load.model_output(path + '//supernova-sin-imf135_300.z014.dat.gz')[:-1]
+sbr_9 = load.model_output(path + '//supernova-sin-imf135_300.z020.dat.gz')[:-1]
+sbr_10 = load.model_output(path + '//supernova-sin-imf135_300.z030.dat.gz')[:-1]
+sbr_11 = load.model_output(path + '//supernova-sin-imf135_300.z040.dat.gz')[:-1]
+sbr_12 = load.model_output(path + '//supernova-sin-imf135_300.zem4.dat.gz')[:-1]
+sbr_13 = load.model_output(path + '//supernova-sin-imf135_300.zem5.dat.gz')[:-1]
+
+sin_file_list = [sbr_1, sbr_2, sbr_3, sbr_4, sbr_5, sbr_6, sbr_7, sbr_8, sbr_9, 
+                 sbr_10, sbr_11, sbr_12, sbr_13]
+
+sin_age = [0]*13
+sin_bin_size = [0]*13
+sin_ccsne = [0]*13
+sin_ccsne_norm = [0]*13
+sin_pisne_norm = [0]*13
+for i, file in enumerate(sin_file_list):
+    sin_age[i] = file.log_age.values
+    sin_bin_size[i] = file.age_yrs.values
+    sin_ccsne[i] = (file[['IIP', 'II', 'Ib', 'Ic']].sum(axis=1))
+    sin_ccsne_norm[i] = ccsne[i]/bin_size[i]/(10**6)
+    sin_pisne_norm[i] = file.PISNe.values/bin_size[i]/(10**6)
+
+plt.figure(figsize = (10,7))
+for ag, norm, z in zip(sin_age, sin_pisne_norm, metallicities):
+    plt.step(ag, norm, label="z = {}".format(z)) 
+plt.yscale("log")
+plt.xlim(6, 7)
+plt.ylim(10**(-15), 10**(-9))
+plt.ylabel(r"Event Rate (events/M$_{\odot}$/year)")
+plt.xlabel("log(age/yrs)")
+plt.legend(fontsize=16)
+plt.title("Event Rates for Varying Metallicity PISNe Transients")
+plt.show()
