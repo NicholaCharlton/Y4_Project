@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import scipy.integrate
 import illustris_python as il
 import matplotlib.pyplot as plt
 
@@ -29,7 +30,7 @@ for z in redshifts:
     denominator = 1 + ((1+z)/2.9)**5.6
     y = (numerator/denominator)*0.66
     empirical.append(y)
-
+'''
 plt.plot(redshifts, sfr, label='TNG')
 plt.plot(redshifts, empirical, label='Empirical')
 plt.yscale('log')
@@ -73,17 +74,66 @@ plt.legend()
 plt.show()
 
 
+# CSFRD against redshift plot - for all groups: SFR_MsunPerYrs_in_ [r5pkpc, 
+#   InRad, r30pkpc, all] _200Myrs
 
+# 5kpc is 'sfr' from above
+sfr_inrad = []
+for snapshot in snapshots:
+    shot = file['Snapshot_' + str(snapshot)]
+    sfr_inrad.append(sum(shot['SFR_MsunPerYrs_in_InRad_200Myrs'])/100**3)
+sfr_30kpc = []
+for snapshot in snapshots:
+    shot = file['Snapshot_' + str(snapshot)]
+    sfr_30kpc.append(sum(shot['SFR_MsunPerYrs_in_r30pkpc_200Myrs'])/100**3)
+sfr_all = []
+for snapshot in snapshots:
+    shot = file['Snapshot_' + str(snapshot)]
+    sfr_all.append(sum(shot['SFR_MsunPerYrs_in_all_200Myrs'])/100**3)
 
-
-# CSFRD against lookback time plot
+plt.plot(redshifts, sfr, label='5kpc aperture')
+plt.plot(redshifts, sfr_inrad, label='2 x stellar half mass radius aperture')
+plt.plot(redshifts, sfr_30kpc, label='30kpc aperture')
+plt.plot(redshifts, sfr_all, label='all gravitationall bound stars')
+#plt.plot(redshifts, empirical, label='Empirical')
+plt.yscale('log')
+plt.ylabel('CSFRD ($M_\odot$ yr$^{-1}$ Mpc$^{-3}$)')
+plt.xlabel('Redshift')
+plt.legend()
+plt.show()
 
 '''
-def lookback(z, omega1, omega2, hubble):
-    
+
+# CSFRD against lookback time plot - for SFR_MsunPerYrs_in_r5pkpc_200Myrs data
+
+def lookback(z, omega_M, omega_L, h):
+    '''
+    Calculates the lookback time according to a specific cosmology.
+
+    Parameters:
+    z : float
+        The redshift at which the lookback time is to be calculated
+    omega_M : float
+        The matter density parameter (0.30897)
+    omega_L : float
+        The dark energy density parameter (0.6911)
+    h : float
+        The hubble parameter (0.6774)
+    '''
     def f(x):
-        a = np.sqrt(omega1*(1+x)**3 + omega2)
+        a = np.sqrt(omega_M*(1+x)**3 + omega_L)
         return 1/((1+x)*a)
-    t_hubble = (1/(100*hubble))*3.0856776*10**19
-    return t_hubble *scipy.integrate.quad(f, 0, z)[0]/(60*60*24*365.2388526*1e9)
-'''
+    t_hubble = (1/(100*h))*3.0856776*10**19
+    return t_hubble*scipy.integrate.quad(f, 0, z)[0]/(60*60*24*365.2388526*1e9)
+
+LB_time = []
+for redshift in redshifts: 
+    LB_time.append(lookback(redshift, 0.30897, 0.6911, 0.6774))
+
+plt.plot(LB_time, sfr, label='TNG')
+plt.plot(LB_time, empirical, label='Empirical')
+plt.yscale('log')
+plt.ylabel('CSFRD ($M_\odot$ yr$^{-1}$ Mpc$^{-3}$)')
+plt.xlabel('Lookback Time (Gyr)')
+plt.legend()
+plt.show()
